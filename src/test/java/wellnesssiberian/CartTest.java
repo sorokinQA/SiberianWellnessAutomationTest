@@ -4,11 +4,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.concurrent.TimeUnit;
@@ -66,13 +64,23 @@ public class CartTest {
         return driver.findElement(By.xpath("//a[@href='/ru/shop/catalog/product/" + productId + "/']"));
     }
 
+    /**
+     * We need to wait for a successful click on "add to cart" element.
+     * For some reason, JS doesn't allow us to do it easily on a first try.
+     * Therefore, we use DriverWait.
+     */
     private void addProductToCart() {
-        WebElement addProduct = driver.findElement(By.className("product-spinner-button__add"));
+        WebDriverWait wait = (WebDriverWait) new WebDriverWait(driver, Config.PAGE_LOADING_TIMEOUT_SEC)
+                .ignoring(StaleElementReferenceException.class);
 
-        WebDriverWait wait = new WebDriverWait(driver, Config.PAGE_LOADING_TIMEOUT_SEC);
-        wait.until(ExpectedConditions.elementToBeClickable(addProduct));
-
-        addProduct.click();
+        wait.until(new ExpectedCondition<Boolean>() {
+            @Override
+            public Boolean apply(WebDriver webDriver) {
+                WebElement element = webDriver.findElement(By.className("product-spinner-button__add"));
+                element.click();
+                return Boolean.TRUE;
+            }
+        });
     }
 
     private boolean isPresence(String productId) {
